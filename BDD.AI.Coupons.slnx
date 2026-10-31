@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/BDD.AI.Coupons/BDD.AI.Coupons.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BDD.AI.Coupons.Specs/BDD.AI.Coupons.Specs.csproj" />
+  </Folder>
+</Solution>
