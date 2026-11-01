@@ -10,7 +10,7 @@
 | ユビキタス言語 | 分類 | クラス | 属性・メソッド | 備考 |
 |---|---|---|---|---|
 | 金額 | 値オブジェクト | `Money` | | 負の値を許さない |
-| 会員ランク | 値オブジェクト | `MembershipRank` | `Of(string)` | 一般 `General`・ゴールド `Gold`・プラチナ `Platinum` の3つの静的な読み取り専用インスタンスを持つ。コンストラクタは非公開。`Of` は日本語の名称からインスタンスを得る。`Of` の引数の名前は `displayName` |
+| 会員ランク | 値オブジェクト | `MembershipRank` | `Of(string)` | 一般 `General`・ゴールド `Gold`・プラチナ `Platinum` の3つの静的な読み取り専用インスタンスを持つ。コンストラクタは非公開。`Of` は日本語の名称からインスタンスを得る。引数の名前は `displayName` |
 | 有効期限 | 値オブジェクト | `ExpirationDate` | | 当日まで有効 |
 | 券種コード | 値オブジェクト | `CouponCode` | | クーポンを識別する |
 | 適用結果 | 値オブジェクト | `CouponApplicationResult` | | 成否・エラーメッセージ・割引額・支払金額 |
@@ -19,7 +19,7 @@
 | 割引計算 | ドメインサービス | `DiscountCalculationService` | | |
 | クーポンを適用する | メソッド | `DiscountCalculationService` | `Apply(Coupon, Cart, DateTime)` | 戻り値は `CouponApplicationResult`、引数の名前は `coupon`、`cart`、`now`、ステップ定義はこれを呼び出す |
 | クーポンが使えるか | メソッド | `DiscountCalculationService` | `CanApply(Coupon, Cart, DateTime)` | 戻り値は `bool`、引数の名前は `coupon`、`cart`、`now` |
-| 業務ルール違反 | 例外 | `DomainException` | `DomainException(string)`、`DomainException(string, Exception)` | `Exception` を継承、値オブジェクトやエンティティの制約に反する値を渡された場合にスローする。原因となる例外を包む場合は第2のコンストラクタを使用する |
+| 業務ルール違反 | 例外 | `DomainException` | `DomainException(string)`、`DomainException(string, Exception)` | `Exception` を継承、値オブジェクトやエンティティの制約に反する値を渡された場合にスローする。原因となる例外をラップする場合は第2のコンストラクタを使用する |
 | 券種コード | 属性 | `Coupon` | `CouponCode` | 型は `CouponCode` |
 | 最低購入金額 | 属性 | `Coupon` | `MinimumPurchaseAmount` | 型は `Money` |
 | 割引上限額 | 属性 | `Coupon` | `MaximumDiscountAmount` | 型は `Money` |
@@ -41,23 +41,23 @@
 属性には `.feature` のステップ文をそのまま使用し、メソッド名は次の表に従います。
 `{string}` と `{int}` は Reqnroll のパラメータで、それぞれ `string` と `int` の引数になります。
 
-| 種別 | ステップ文 | メソッド名 | 引数 |
-|---|---|---|---|
-| 前提 | クーポン {string} が存在する | `CouponExists` | `string couponCode` |
-| 前提 | クーポン {string} の最低購入金額は {int} 円である | `CouponHasMinimumPurchaseAmount` | `string couponCode`、`int minimumPurchaseAmount` |
-| 前提 | クーポン {string} の割引上限額は {int} 円である | `CouponHasMaximumDiscountAmount` | `string couponCode`、`int maximumDiscountAmount` |
-| 前提 | クーポン {string} の有効期限は {string} である | `CouponExpiresOn` | `string couponCode`、`string expirationDate` |
-| 前提 | 割引額の端数は切り捨てる | `DiscountFractionIsTruncated` | なし |
-| 前提 | ポイントは {int} ポイントを {int} 円として計算する | `PointRateIs` | `int points`、`int yen` |
-| 前提 | 現在日時は {string} である | `CurrentDateTimeIs` | `string now` |
-| 前提 | ポイントを利用しない | `PointsAreNotUsed` | なし |
-| 前提 | 会員ランクは {string} である | `MembershipRankIs` | `string membershipRank` |
-| 前提 | カートの購入金額は {int} 円である | `CartTotalAmountIs` | `int totalAmount` |
-| もし | クーポン {string} を適用する | `ApplyCoupon` | `string couponCode` |
-| ならば | クーポンの適用は失敗する | `CouponApplicationFails` | なし |
-| ならば | エラーメッセージ {string} が表示される | `ErrorMessageIsShown` | `string errorMessage` |
-| ならば | 割引額は {int} 円である | `DiscountAmountIs` | `int discountAmount` |
-| ならば | 支払金額は {int} 円である | `PaymentAmountIs` | `int paymentAmount` |
+| 種別 | ステップ文 | メソッド名 |
+|---|---|---|
+| 前提 | クーポン {string} が存在する | `CouponExists` |
+| 前提 | クーポン {string} の最低購入金額は {int} 円である | `CouponHasMinimumPurchaseAmount` |
+| 前提 | クーポン {string} の割引上限額は {int} 円である | `CouponHasMaximumDiscountAmount` |
+| 前提 | クーポン {string} の有効期限は {string} である | `CouponExpiresOn` |
+| 前提 | 割引額の端数は切り捨てる | `DiscountFractionIsTruncated` |
+| 前提 | ポイントは {int} ポイントを {int} 円として計算する | `PointRateIs` |
+| 前提 | 現在日時は {string} である | `CurrentDateTimeIs` |
+| 前提 | ポイントを利用しない | `PointsAreNotUsed` |
+| 前提 | 会員ランクは {string} である | `MembershipRankIs` |
+| 前提 | カートの購入金額は {int} 円である | `CartTotalAmountIs` |
+| もし | クーポン {string} を適用する | `ApplyCoupon` |
+| ならば | クーポンの適用は失敗する | `CouponApplicationFails` |
+| ならば | エラーメッセージ {string} が表示される | `ErrorMessageIsShown` |
+| ならば | 割引額は {int} 円である | `DiscountAmountIs` |
+| ならば | 支払金額は {int} 円である | `PaymentAmountIs` |
 
 メソッド名は、前提では状況を表す名前（`CouponExists` など）、もしでは動詞から始まる名前（`ApplyCoupon`）、
 ならばでは検証する内容を表す名前（`CouponApplicationFails` など）とします。
@@ -94,9 +94,9 @@
 `DateTime.Now` のように実際の現在時刻を取得する実装にすると、背景の指定とは無関係に
 実行した日の日時で判定されてしまい、シナリオの結果が実行日によって変わります。
 
-**業務上の失敗と、プログラムの誤りを分けます。**
-処理が正常に完了しない場合には、業務上の失敗とプログラムの誤りの2種類があり、この2つを区別して扱います。
-クーポンを使えないことは業務上の失敗で、`.feature` にも「ならば クーポンの適用は失敗する」と
+**業務ルールによる不成立と、プログラムの誤りを分けます。**
+処理が正常に完了しない場合には、業務ルールによる不成立とプログラムの誤りの2種類があり、この2つを区別して扱います。
+クーポンを使えないことは業務ルールによる不成立で、`.feature` にも「ならば クーポンの適用は失敗する」と
 記述されているとおり、業務としては正常な結果です。したがって例外にはせず、`CouponApplicationResult` の
 成否とエラーメッセージで呼び出し側に返します。一方、金額に負の値が渡されることはプログラムの誤りで、
 仕様のどこにも記述されていません。これは正常な結果として返すものではないため、`DomainException` を
