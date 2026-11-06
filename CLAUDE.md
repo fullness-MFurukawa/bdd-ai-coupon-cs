@@ -30,6 +30,8 @@ C# と Reqnroll で実行します。
 - エンティティには、状態を変更するメソッドではなく、業務上の判断を表すメソッドを持たせる
 - ドメイン層は ASP.NET Core や Entity Framework に依存させない
 - Nullable 参照型は有効（`<Nullable>enable</Nullable>`）のまま使用し、`null` を許容する箇所だけ `?` を付ける
+- エンティティの同一性は識別子で判定する。`Equals(object?)` と `GetHashCode()` を
+  オーバーライドし、識別子のプロパティだけを比較する
 
 ### 名前空間の構成
 
@@ -57,6 +59,7 @@ C# と Reqnroll で実行します。
 - 1行は 120 文字以内とする
 - 名前空間はファイルスコープ（`namespace BDD.AI.Coupons.Domain.Models;`）で記述する
 - `using` は `ImplicitUsings` で暗黙に取り込まれるものを重複して記述しない
+- private フィールドの名前は、先頭にアンダースコアを付けた camelCase とする（`_couponCode`）
 
 ### 例外の方針
 
@@ -75,6 +78,12 @@ C# と Reqnroll で実行します。
   ステップ定義からは呼び出すだけにする
 - 前提は状況を整える処理、もしは操作、ならばは結果の検証に限る
 - `.feature` を変更しない。ステップ定義が記述しにくい場合は、変更を提案して確認を取る
+- 検証には MSTest の `Assert` を使用する
+- 背景のステップで受け取った値はフィールドに保持し、「もし」のステップで
+  ドメインモデルのオブジェクトを生成する。シナリオの実行時に必ず設定されるフィールドは、
+  Nullable 参照型の警告を避けるため `null!` で初期化する
+- `.feature` の文字列から `DateOnly` と `DateTime` への変換はステップ定義で行う。
+  書式は定数として定義し、`CultureInfo.InvariantCulture` を指定して変換する
 
 ## 開発環境
 

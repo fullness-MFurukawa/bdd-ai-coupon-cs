@@ -9,31 +9,39 @@
 
 | ユビキタス言語 | 分類 | クラス | 属性・メソッド | 備考 |
 |---|---|---|---|---|
-| 金額 | 値オブジェクト | `Money` | | 負の値を許さない |
-| 会員ランク | 値オブジェクト | `MembershipRank` | `Of(string)` | 一般 `General`・ゴールド `Gold`・プラチナ `Platinum` の3つの静的な読み取り専用インスタンスを持つ。コンストラクタは非公開。`Of` は日本語の名称からインスタンスを得る。引数の名前は `displayName` |
-| 有効期限 | 値オブジェクト | `ExpirationDate` | | 当日まで有効 |
-| 券種コード | 値オブジェクト | `CouponCode` | | クーポンを識別する |
-| 適用結果 | 値オブジェクト | `CouponApplicationResult` | | 成否・エラーメッセージ・割引額・支払金額 |
-| クーポン | エンティティ | `Coupon` | | 識別子は券種コード |
-| 買い物かご | エンティティ | `Cart` | | |
-| 割引計算 | ドメインサービス | `DiscountCalculationService` | | |
-| クーポンを適用する | メソッド | `DiscountCalculationService` | `Apply(Coupon, Cart, DateTime)` | 戻り値は `CouponApplicationResult`、引数の名前は `coupon`、`cart`、`now`、ステップ定義はこれを呼び出す |
-| クーポンが使えるか | メソッド | `DiscountCalculationService` | `CanApply(Coupon, Cart, DateTime)` | 戻り値は `bool`、引数の名前は `coupon`、`cart`、`now` |
-| 業務ルール違反 | 例外 | `DomainException` | `DomainException(string)`、`DomainException(string, Exception)` | `Exception` を継承、値オブジェクトやエンティティの制約に反する値を渡された場合にスローする。原因となる例外をラップする場合は第2のコンストラクタを使用する |
-| 券種コード | 属性 | `Coupon` | `CouponCode` | 型は `CouponCode` |
-| 最低購入金額 | 属性 | `Coupon` | `MinimumPurchaseAmount` | 型は `Money` |
-| 割引上限額 | 属性 | `Coupon` | `MaximumDiscountAmount` | 型は `Money` |
-| 有効期限 | 属性 | `Coupon` | `ExpirationDate` | 型は `ExpirationDate` |
-| 購入金額 | 属性 | `Cart` | `TotalAmount` | 型は `Money` |
-| 会員ランク | 属性 | `Cart` | `MembershipRank` | 型は `MembershipRank` |
-| 会員ランクの名称 | 属性 | `MembershipRank` | `DisplayName` | 型は `string`（一般・ゴールド・プラチナ）、`Of` はこの値でインスタンスを探索する |
-| 成否 | 属性 | `CouponApplicationResult` | `Successful` | 型は `bool` |
-| エラーメッセージ | 属性 | `CouponApplicationResult` | `ErrorMessage` | 型は `string?`（成功時は `null`） |
-| 割引額 | 属性 | `CouponApplicationResult` | `DiscountAmount` | 型は `Money` |
-| 支払金額 | 属性 | `CouponApplicationResult` | `PaymentAmount` | 型は `Money` |
-| 金額の値 | 属性 | `Money` | `Amount` | 型は `long`（円単位） |
-| 券種コードの値 | 属性 | `CouponCode` | `Value` | 型は `string` |
-| 有効期限の日付 | 属性 | `ExpirationDate` | `Date` | 型は `DateOnly` |
+| 金額 | 値オブジェクト | `Money` | | 負の値を許さない。 |
+| 会員ランク | 値オブジェクト | `MembershipRank` | `Of(string)` | 一般 `General`・ゴールド `Gold`・プラチナ `Platinum` の3つの静的な読み取り専用インスタンスを持つ。コンストラクタは非公開。`Of` は日本語の名称からインスタンスを得る。引数の名前は `displayName`。 |
+| 有効期限 | 値オブジェクト | `ExpirationDate` | | 当日まで有効。 |
+| 券種コード | 値オブジェクト | `CouponCode` | | クーポンを識別する。 |
+| 適用結果 | 値オブジェクト | `CouponApplicationResult` | | 成否・エラーメッセージ・割引額・支払金額。 |
+| クーポン | エンティティ | `Coupon` | | 識別子は券種コード。 |
+| 買い物かご | エンティティ | `Cart` |  |
+| 割引計算 | ドメインサービス | `DiscountCalculationService` |  |
+| クーポンを適用する | メソッド | `DiscountCalculationService` | `Apply(Coupon, Cart, DateTime)` | 戻り値は `CouponApplicationResult`、引数の名前は `coupon`、`cart`、`now`、ステップ定義はこれを呼び出す。判定は有効期限、最低購入金額の順に行い、両方を満たさない場合は有効期限切れのメッセージを返す。適用できない場合は `CouponApplicationResult.Failure` を返す。適用できる場合の割引額の計算は現時点では実装せず、`NotImplementedException` のままとする。 |
+| クーポンが使えるか | メソッド | `DiscountCalculationService` | `CanApply(Coupon, Cart, DateTime)` | 戻り値は `bool`、引数の名前は `coupon`、`cart`、`now`。 |
+| 業務ルール違反 | 例外 | `DomainException` | `DomainException(string)`、`DomainException(string, Exception)` | `Exception` を継承、値オブジェクトやエンティティの制約に反する値を渡された場合にスローする。原因となる例外をラップする場合は第2のコンストラクタを使用する。 |
+| 券種コード | 属性 | `Coupon` | `CouponCode` | 型は `CouponCode`。 |
+| 最低購入金額 | 属性 | `Coupon` | `MinimumPurchaseAmount` | 型は `Money`。 |
+| 割引上限額 | 属性 | `Coupon` | `MaximumDiscountAmount` | 型は `Money`。 |
+| 有効期限 | 属性 | `Coupon` | `ExpirationDate` | 型は `ExpirationDate`。 |
+| 購入金額 | 属性 | `Cart` | `TotalAmount` | 型は `Money`。 |
+| 会員ランク | 属性 | `Cart` | `MembershipRank` | 型は `MembershipRank`。 |
+| 会員ランクの名称 | 属性 | `MembershipRank` | `DisplayName` | 型は `string`（一般・ゴールド・プラチナ）、`Of` はこの値でインスタンスを探索する。 |
+| 成否 | 属性 | `CouponApplicationResult` | `Successful` | 型は `bool`。 |
+| エラーメッセージ | 属性 | `CouponApplicationResult` | `ErrorMessage` | 型は `string?`（成功時は `null`）。 |
+| 割引額 | 属性 | `CouponApplicationResult` | `DiscountAmount` | 型は `Money`。 |
+| 支払金額 | 属性 | `CouponApplicationResult` | `PaymentAmount` | 型は `Money`。 |
+| 金額の値 | 属性 | `Money` | `Amount` | 型は `long`（円単位）。 |
+| 券種コードの値 | 属性 | `CouponCode` | `Value` | 型は `string`。 |
+| 有効期限の日付 | 属性 | `ExpirationDate` | `Date` | 型は `DateOnly`。 |
+| 金額が他の金額より少ないか | メソッド | `Money` | `IsLessThan(Money)` | 戻り値は `bool`、引数の名前は `other`。 |
+| 指定した日が有効期限内か | メソッド | `ExpirationDate` | `IsValidOn(DateOnly)` | 当日まで有効。引数の日付が有効期限の日付以前であれば `true`。引数の名前は `date`。 |
+| 最低購入金額を満たすか | メソッド | `Coupon` | `IsSatisfiedBy(Money)` | 引数は購入金額。購入金額が最低購入金額以上であれば `true`。引数の名前は `totalAmount`。 |
+| クーポンが有効期限内か | メソッド | `Coupon` | `IsValidOn(DateTime)` | 引数の日時を日付に変換し、`ExpirationDate.IsValidOn` に委譲する。引数の名前は `now`。 |
+| 同一のクーポンか | メソッド | `Coupon` | `Equals`、`GetHashCode` | 券種コードが等しければ同一とみなす（備考「識別子は券種コード」をコードで表す）。 |
+| 適用の失敗 | メソッド | `CouponApplicationResult` | `Failure(string, Money)` | 静的ファクトリ。引数はエラーメッセージと購入金額。成否は `false`、割引額は 0 円、支払金額は購入金額とする。引数の名前は `errorMessage`、`totalAmount`。 |
+| 最低購入金額未満のエラーメッセージ | 文言 | `DiscountCalculationService` | | 「{最低購入金額} 円以上のお買い上げでご利用いただけます」。金額は最低購入金額から生成し、3桁ごとにカンマで区切る。桁区切りは `CultureInfo.InvariantCulture` を指定して生成する。 |
+| 有効期限切れのエラーメッセージ | 文言 | `DiscountCalculationService` | | 「このクーポンは有効期限が切れています」。 |
 
 ## ステップ定義
 
@@ -64,6 +72,31 @@
 
 `.feature` で「かつ」と記述されたステップは、直前のステップと同じ種別（`[Given]` または `[Then]`）で
 定義します。金額は `{int}` で受け取り、`int` の引数とします。`Money` への変換はステップ定義の中で行います。
+
+### ステップ定義が保持する状態
+
+背景の各ステップで受け取った値はフィールドに保持し、「もし クーポン {string} を適用する」で
+`Coupon` と `Cart` を生成して `DiscountCalculationService.Apply` を呼び出し、結果を保持します。
+
+| 用語 | フィールド | 型 | 設定するステップ |
+|---|---|---|---|
+| 券種コード | `_couponCode` | `CouponCode` | クーポン {string} が存在する |
+| 最低購入金額 | `_minimumPurchaseAmount` | `Money` | クーポン {string} の最低購入金額は {int} 円である |
+| 割引上限額 | `_maximumDiscountAmount` | `Money` | クーポン {string} の割引上限額は {int} 円である |
+| 有効期限 | `_expirationDate` | `ExpirationDate` | クーポン {string} の有効期限は {string} である |
+| 現在日時 | `_now` | `DateTime` | 現在日時は {string} である |
+| 会員ランク | `_membershipRank` | `MembershipRank` | 会員ランクは {string} である |
+| 購入金額 | `_totalAmount` | `Money` | カートの購入金額は {int} 円である |
+| 適用結果 | `_result` | `CouponApplicationResult` | クーポン {string} を適用する |
+| ポイントの換算のポイント数 | `_pointRatePoints` | `int` | ポイントは {int} ポイントを {int} 円として計算する |
+| ポイントの換算の円 | `_pointRateYen` | `int` | ポイントは {int} ポイントを {int} 円として計算する |
+| 割引計算 | `_discountCalculationService` | `DiscountCalculationService` | （フィールドの初期化子で生成する） |
+
+`.feature` の文字列から日付と日時への変換はステップ定義で行います。書式は、日付が `yyyy-MM-dd`、
+日時が `yyyy-MM-dd HH:mm:ss` です。
+
+「割引額の端数は切り捨てる」「ポイントは {int} ポイントを {int} 円として計算する」「ポイントを利用しない」は
+現時点のシナリオの判定に関わりません。受け取った値がある場合はフィールドに保持するだけとし、判定には使用しません。
 
 ## 補足
 

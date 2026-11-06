@@ -1,3 +1,5 @@
+using BDD.AI.Coupons.Domain.Exceptions;
+
 namespace BDD.AI.Coupons.Domain.Models;
 
 /// <summary>
@@ -29,8 +31,11 @@ public record MembershipRank
     /// </summary>
     /// <param name="displayName">会員ランクの名称（一般・ゴールド・プラチナ）</param>
     /// <returns>名称に対応する会員ランク</returns>
+    /// <exception cref="DomainException">該当する名称の会員ランクが無い場合</exception>
     public static MembershipRank Of(string displayName)
     {
-        throw new NotImplementedException();
+        MembershipRank[] ranks = [General, Gold, Platinum];
+        return ranks.FirstOrDefault(rank => rank.DisplayName == displayName)
+            ?? throw new DomainException($"該当する会員ランクがありません。指定された名称: {displayName}");
     }
 }

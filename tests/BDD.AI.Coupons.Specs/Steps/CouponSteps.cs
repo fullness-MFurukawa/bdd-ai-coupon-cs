@@ -1,3 +1,6 @@
+using System.Globalization;
+using BDD.AI.Coupons.Domain.Models;
+using BDD.AI.Coupons.Domain.Services;
 using Reqnroll;
 
 namespace BDD.AI.Coupons.Specs.Steps;
@@ -8,6 +11,32 @@ namespace BDD.AI.Coupons.Specs.Steps;
 [Binding]
 public class CouponSteps
 {
+    private const string DateFormat = "yyyy-MM-dd";
+
+    private const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+
+    private readonly DiscountCalculationService _discountCalculationService = new();
+
+    private CouponCode _couponCode = null!;
+
+    private Money _minimumPurchaseAmount = null!;
+
+    private Money _maximumDiscountAmount = null!;
+
+    private ExpirationDate _expirationDate = null!;
+
+    private DateTime _now;
+
+    private MembershipRank _membershipRank = null!;
+
+    private Money _totalAmount = null!;
+
+    private CouponApplicationResult _result = null!;
+
+    private int _pointRatePoints;
+
+    private int _pointRateYen;
+
     /// <summary>
     /// 前提 クーポン {string} が存在する
     /// </summary>
@@ -15,7 +44,7 @@ public class CouponSteps
     [Given("クーポン {string} が存在する")]
     public void CouponExists(string couponCode)
     {
-        throw new PendingStepException();
+        _couponCode = new CouponCode(couponCode);
     }
 
     /// <summary>
@@ -26,7 +55,7 @@ public class CouponSteps
     [Given("クーポン {string} の最低購入金額は {int} 円である")]
     public void CouponHasMinimumPurchaseAmount(string couponCode, int minimumPurchaseAmount)
     {
-        throw new PendingStepException();
+        _minimumPurchaseAmount = new Money(minimumPurchaseAmount);
     }
 
     /// <summary>
@@ -37,7 +66,7 @@ public class CouponSteps
     [Given("クーポン {string} の割引上限額は {int} 円である")]
     public void CouponHasMaximumDiscountAmount(string couponCode, int maximumDiscountAmount)
     {
-        throw new PendingStepException();
+        _maximumDiscountAmount = new Money(maximumDiscountAmount);
     }
 
     /// <summary>
@@ -48,7 +77,8 @@ public class CouponSteps
     [Given("クーポン {string} の有効期限は {string} である")]
     public void CouponExpiresOn(string couponCode, string expirationDate)
     {
-        throw new PendingStepException();
+        _expirationDate = new ExpirationDate(
+            DateOnly.ParseExact(expirationDate, DateFormat, CultureInfo.InvariantCulture));
     }
 
     /// <summary>
@@ -57,7 +87,7 @@ public class CouponSteps
     [Given("割引額の端数は切り捨てる")]
     public void DiscountFractionIsTruncated()
     {
-        throw new PendingStepException();
+        // 現時点のシナリオの判定に関わらないため、何も保持しない。
     }
 
     /// <summary>
@@ -68,7 +98,8 @@ public class CouponSteps
     [Given("ポイントは {int} ポイントを {int} 円として計算する")]
     public void PointRateIs(int points, int yen)
     {
-        throw new PendingStepException();
+        _pointRatePoints = points;
+        _pointRateYen = yen;
     }
 
     /// <summary>
@@ -78,7 +109,7 @@ public class CouponSteps
     [Given("現在日時は {string} である")]
     public void CurrentDateTimeIs(string now)
     {
-        throw new PendingStepException();
+        _now = DateTime.ParseExact(now, DateTimeFormat, CultureInfo.InvariantCulture);
     }
 
     /// <summary>
@@ -87,7 +118,7 @@ public class CouponSteps
     [Given("ポイントを利用しない")]
     public void PointsAreNotUsed()
     {
-        throw new PendingStepException();
+        // 現時点のシナリオの判定に関わらないため、何も保持しない。
     }
 
     /// <summary>
@@ -97,7 +128,7 @@ public class CouponSteps
     [Given("会員ランクは {string} である")]
     public void MembershipRankIs(string membershipRank)
     {
-        throw new PendingStepException();
+        _membershipRank = MembershipRank.Of(membershipRank);
     }
 
     /// <summary>
@@ -107,7 +138,7 @@ public class CouponSteps
     [Given("カートの購入金額は {int} 円である")]
     public void CartTotalAmountIs(int totalAmount)
     {
-        throw new PendingStepException();
+        _totalAmount = new Money(totalAmount);
     }
 
     /// <summary>
@@ -117,7 +148,9 @@ public class CouponSteps
     [When("クーポン {string} を適用する")]
     public void ApplyCoupon(string couponCode)
     {
-        throw new PendingStepException();
+        var coupon = new Coupon(_couponCode, _minimumPurchaseAmount, _maximumDiscountAmount, _expirationDate);
+        var cart = new Cart(_totalAmount, _membershipRank);
+        _result = _discountCalculationService.Apply(coupon, cart, _now);
     }
 
     /// <summary>
@@ -126,7 +159,7 @@ public class CouponSteps
     [Then("クーポンの適用は失敗する")]
     public void CouponApplicationFails()
     {
-        throw new PendingStepException();
+        Assert.IsFalse(_result.Successful);
     }
 
     /// <summary>
@@ -136,7 +169,7 @@ public class CouponSteps
     [Then("エラーメッセージ {string} が表示される")]
     public void ErrorMessageIsShown(string errorMessage)
     {
-        throw new PendingStepException();
+        Assert.AreEqual(errorMessage, _result.ErrorMessage);
     }
 
     /// <summary>
@@ -146,7 +179,7 @@ public class CouponSteps
     [Then("割引額は {int} 円である")]
     public void DiscountAmountIs(int discountAmount)
     {
-        throw new PendingStepException();
+        Assert.AreEqual(new Money(discountAmount), _result.DiscountAmount);
     }
 
     /// <summary>
@@ -156,6 +189,6 @@ public class CouponSteps
     [Then("支払金額は {int} 円である")]
     public void PaymentAmountIs(int paymentAmount)
     {
-        throw new PendingStepException();
+        Assert.AreEqual(new Money(paymentAmount), _result.PaymentAmount);
     }
 }
