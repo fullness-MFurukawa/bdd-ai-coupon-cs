@@ -19,7 +19,8 @@ C# と Reqnroll で実行します。
 | 記事 | タイトル |
 |------|---------|
 | 第2回 | [仕様がそのまま品質基準になる——AIと作るGherkin（ガーキン）入門](https://note.com/fullness_dev/n/n8afa12c67ee3) |
-| C#編-① | 仕様から実装へ（C#編-①）——.feature を実行するコードを AI に生成させる |
+| C#編-① | [仕様から実装へ（C#編-①）——.feature を実行するコードを AI に生成させる](https://note.com/fullness_dev/n/na9ccf17be2fc) |
+| C#編-② | [仕様から実装へ（C#編-②）——シナリオを成功させる処理を AI に生成させる](https://note.com/fullness_dev/n/na587bafc5863) |
 
 記事の公開時点のコードは、タグから取得できます。記事の手順に沿って実行する場合は、
 対応するタグをチェックアウトしてください。
@@ -28,11 +29,13 @@ C# と Reqnroll で実行します。
 git clone https://github.com/fullness-MFurukawa/bdd-ai-coupon-cs.git
 cd bdd-ai-coupon-cs
 git checkout v1   # C#編-①の公開時点
+git checkout v2   # C#編-②の公開時点
 ```
 
 | タグ | 状態 |
 |------|------|
 | `v1` | ドメインモデルのスケルトンとステップ定義のひな型。15ステップが定義済みで、最初のステップが pending で停止する |
+| `v2` | ドメインモデルとステップ定義に処理を実装。シナリオ「購入金額が最低購入金額に 1 円足りない場合はクーポンを使えない」が成功する |
 
 ---
 
@@ -72,6 +75,8 @@ dotnet test --logger "console;verbosity=detailed"
 ```
 
 `--logger` の指定により、`.feature` の各ステップが実行結果とともに表示されます。
+`tests/BDD.AI.Coupons.Specs/Tracing/StepResultTracer.cs` は、Reqnroll のトレース出力を差し替えるプラグインで、
+各ステップの結果を「✔ 前提 クーポン "SALE2026" が存在する」の形式で1行ずつ表示します。実行内容には影響しません。
 
 `tests/BDD.AI.Coupons.Specs/reqnroll.json` には、未定義や未実装のステップを含むシナリオを
 失敗として扱う設定（`missingOrPendingStepsOutcome: Error`）を記述しています。
@@ -99,6 +104,7 @@ bdd-ai-coupon-cs/
 │   └── BDD.AI.Coupons.Specs/
 │       ├── Features/                     .feature
 │       ├── Steps/                        ステップ定義
+│       ├── Tracing/                      ステップごとの結果を出力するトレーサー
 │       └── reqnroll.json                 Reqnroll の設定
 ├── CLAUDE.md                             Claude Code への指示（規約）
 └── BDD.AI.Coupons.slnx
@@ -111,6 +117,8 @@ bdd-ai-coupon-cs/
 - 値オブジェクトは `record` で実装します
 - エンティティは `class` で実装し、プロパティは `get` のみとします。値はコンストラクタで設定します
 - エンティティには、状態を変更するメソッドではなく、業務上の判断を表すメソッドを持たせます
+- エンティティの同一性は識別子で判定します（`Equals` と `GetHashCode` をオーバーライド）
+- ステップ定義が使用するドメインサービスは、Reqnroll のコンテキスト注入によりコンストラクタで受け取ります
 - クーポンを使えないことは業務上の正常な結果として `CouponApplicationResult` で返し、
   業務上の制約に反する値は `DomainException` で報告します
 - ドメイン層は ASP.NET Core や Entity Framework に依存させません
