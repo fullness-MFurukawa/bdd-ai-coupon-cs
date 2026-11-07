@@ -90,7 +90,7 @@
 | 適用結果 | `_result` | `CouponApplicationResult` | クーポン {string} を適用する |
 | ポイントの換算のポイント数 | `_pointRatePoints` | `int` | ポイントは {int} ポイントを {int} 円として計算する |
 | ポイントの換算の円 | `_pointRateYen` | `int` | ポイントは {int} ポイントを {int} 円として計算する |
-| 割引計算 | `_discountCalculationService` | `DiscountCalculationService` | （フィールドの初期化子で生成する） |
+| 割引計算 | `_discountCalculationService` | `DiscountCalculationService` | （Reqnroll のコンテキスト注入によりコンストラクタで受け取る） |
 
 `.feature` の文字列から日付と日時への変換はステップ定義で行います。書式は、日付が `yyyy-MM-dd`、
 日時が `yyyy-MM-dd HH:mm:ss` です。

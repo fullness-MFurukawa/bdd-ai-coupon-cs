@@ -15,7 +15,7 @@ public class CouponSteps
 
     private const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
-    private readonly DiscountCalculationService _discountCalculationService = new();
+    private readonly DiscountCalculationService _discountCalculationService;
 
     private CouponCode _couponCode = null!;
 
@@ -36,6 +36,15 @@ public class CouponSteps
     private int _pointRatePoints;
 
     private int _pointRateYen;
+
+    /// <summary>
+    /// クーポンによる割引の適用のステップ定義を生成する
+    /// </summary>
+    /// <param name="discountCalculationService">割引計算サービス</param>
+    public CouponSteps(DiscountCalculationService discountCalculationService)
+    {
+        _discountCalculationService = discountCalculationService;
+    }
 
     /// <summary>
     /// 前提 クーポン {string} が存在する
