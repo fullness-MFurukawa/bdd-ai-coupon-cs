@@ -10,21 +10,25 @@ namespace BDD.AI.Coupons.Domain.Models;
 public record MembershipRank
 {
     /// <summary>一般</summary>
-    public static readonly MembershipRank General = new("一般");
+    public static readonly MembershipRank General = new("一般", new DiscountRate(5));
 
     /// <summary>ゴールド</summary>
-    public static readonly MembershipRank Gold = new("ゴールド");
+    public static readonly MembershipRank Gold = new("ゴールド", new DiscountRate(10));
 
     /// <summary>プラチナ</summary>
-    public static readonly MembershipRank Platinum = new("プラチナ");
+    public static readonly MembershipRank Platinum = new("プラチナ", new DiscountRate(15));
 
-    private MembershipRank(string displayName)
+    private MembershipRank(string displayName, DiscountRate discountRate)
     {
         DisplayName = displayName;
+        DiscountRate = discountRate;
     }
 
     /// <summary>会員ランクの名称</summary>
     public string DisplayName { get; }
+
+    /// <summary>割引率</summary>
+    public DiscountRate DiscountRate { get; }
 
     /// <summary>
     /// 会員ランクの名称から会員ランクを得る。

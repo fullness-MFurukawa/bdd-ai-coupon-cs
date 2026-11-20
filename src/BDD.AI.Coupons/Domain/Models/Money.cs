@@ -23,4 +23,15 @@ public record Money(long Amount)
     {
         return Amount < other.Amount;
     }
+
+    /// <summary>
+    /// 金額を減算する。
+    /// </summary>
+    /// <param name="other">差し引く金額</param>
+    /// <returns>この金額から差し引く金額を引いた金額</returns>
+    /// <exception cref="DomainException">結果が負になる場合</exception>
+    public Money Subtract(Money other)
+    {
+        return new Money(Amount - other.Amount);
+    }
 }

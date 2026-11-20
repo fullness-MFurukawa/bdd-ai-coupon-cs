@@ -3,8 +3,7 @@
 ユビキタス言語（日本語）と、C# の実装名の対応を定めます。クラス名・プロパティ名・メソッド名は、
 この表に従って記述します。表に無い用語が必要になった場合は、名前を定める前に確認してください。
 
-対象は、`tests/BDD.AI.Coupons.Specs/Features/coupon.feature` のうち、背景と
-「購入金額が最低購入金額に 1 円足りない場合はクーポンを使えない」シナリオに必要な範囲です。
+対象は、`tests/BDD.AI.Coupons.Specs/Features/coupon.feature` のすべてのシナリオに必要な範囲です。
 シナリオを追加するたびに、この表も更新します。
 
 | ユビキタス言語 | 分類 | クラス | 属性・メソッド | 備考 |
@@ -17,7 +16,7 @@
 | クーポン | エンティティ | `Coupon` | | 識別子は券種コード。 |
 | 買い物かご | エンティティ | `Cart` |  |
 | 割引計算 | ドメインサービス | `DiscountCalculationService` |  |
-| クーポンを適用する | メソッド | `DiscountCalculationService` | `Apply(Coupon, Cart, DateTime)` | 戻り値は `CouponApplicationResult`、引数の名前は `coupon`、`cart`、`now`、ステップ定義はこれを呼び出す。判定は有効期限、最低購入金額の順に行い、両方を満たさない場合は有効期限切れのメッセージを返す。適用できない場合は `CouponApplicationResult.Failure` を返す。適用できる場合の割引額の計算は現時点では実装せず、`NotImplementedException` のままとする。 |
+| クーポンを適用する | メソッド | `DiscountCalculationService` | `Apply(Coupon, Cart, DateTime)` | 戻り値は `CouponApplicationResult`、引数の名前は `coupon`、`cart`、`now`、ステップ定義はこれを呼び出す。判定は有効期限、最低購入金額の順に行い、両方を満たさない場合は有効期限切れのメッセージを返す。適用できない場合は `CouponApplicationResult.Failure` を返し、買い物かごを変更しない。適用できる場合は `CalculateDiscount` で割引額を計算し、`Cart.ApplyCoupon` で買い物かごに適用して `CouponApplicationResult.Success` を返す。 |
 | クーポンが使えるか | メソッド | `DiscountCalculationService` | `CanApply(Coupon, Cart, DateTime)` | 戻り値は `bool`、引数の名前は `coupon`、`cart`、`now`。 |
 | 業務ルール違反 | 例外 | `DomainException` | `DomainException(string)`、`DomainException(string, Exception)` | `Exception` を継承、値オブジェクトやエンティティの制約に反する値を渡された場合にスローする。原因となる例外をラップする場合は第2のコンストラクタを使用する。 |
 | 券種コード | 属性 | `Coupon` | `CouponCode` | 型は `CouponCode`。 |
@@ -42,6 +41,31 @@
 | 適用の失敗 | メソッド | `CouponApplicationResult` | `Failure(string, Money)` | 静的ファクトリ。引数はエラーメッセージと購入金額。成否は `false`、割引額は 0 円、支払金額は購入金額とする。引数の名前は `errorMessage`、`totalAmount`。 |
 | 最低購入金額未満のエラーメッセージ | 文言 | `DiscountCalculationService` | | 「{最低購入金額} 円以上のお買い上げでご利用いただけます」。金額は最低購入金額から生成し、3桁ごとにカンマで区切る。桁区切りは `CultureInfo.InvariantCulture` を指定して生成する。 |
 | 有効期限切れのエラーメッセージ | 文言 | `DiscountCalculationService` | | 「このクーポンは有効期限が切れています」。 |
+| 割引率 | 値オブジェクト | `DiscountRate` | `Percent` | パーセント単位。型は `int`。0〜100 以外は `DomainException`。 |
+| 割引率 | 属性 | `MembershipRank` | `DiscountRate` | 型は `DiscountRate`。一般 5・ゴールド 10・プラチナ 15。 |
+| 割引率を適用する | メソッド | `DiscountRate` | `ApplyTo(Money)` | 購入金額に割引率を掛け、1 円未満を切り捨てた金額を返す。戻り値は `Money`、引数の名前は `amount`。 |
+| 割引額を計算する | メソッド | `DiscountCalculationService` | `CalculateDiscount(Coupon, Cart)` | 戻り値は `Money`。割引率の適用と割引上限の判定を行う。引数の名前は `coupon`、`cart`。 |
+| 金額を減算する | メソッド | `Money` | `Subtract(Money)` | 戻り値は `Money`。結果が負になる場合は `DomainException`。引数の名前は `other`。 |
+| ポイント数 | 値オブジェクト | `Points` | `Value` | 型は `long`。負の値を許さない。 |
+| ポイントの換算 | 値オブジェクト | `PointRate` | `Points`、`Yen` | 「{int} ポイントを {int} 円として計算する」。型はいずれも `int`。`Points` は 1 以上、`Yen` は 0 以上。 |
+| ポイントを金額に換算する | メソッド | `PointRate` | `ToMoney(Points)` | 戻り値は `Money`。1 円未満は切り捨てる。引数の名前は `points`。 |
+| 適用中のクーポン | 属性 | `Cart` | `AppliedCoupon` | 型は `Coupon?`（未適用の場合は `null`）。 |
+| 割引額 | 属性 | `Cart` | `DiscountAmount` | 型は `Money`。 |
+| 利用ポイント | 属性 | `Cart` | `UsedPoints` | 型は `Points`。 |
+| ポイントによる値引き額 | 属性 | `Cart` | `PointDiscountAmount` | 型は `Money`。 |
+| 支払金額 | 属性 | `Cart` | `PaymentAmount` | 型は `Money`。購入金額 − 割引額 − ポイントによる値引き額。 |
+| クーポンを適用する（状態の変更） | メソッド | `Cart` | `ApplyCoupon(Coupon, Money)` | 割引額を設定し、ポイントの利用を解除する。引数の名前は `coupon`、`discountAmount`。 |
+| クーポンを解除する | メソッド | `Cart` | `CancelCoupon(CouponCode)` | 適用中のクーポンと異なる券種コード、または未適用の場合は `DomainException`。引数の名前は `couponCode`。 |
+| ポイントを利用する | メソッド | `Cart` | `UsePoints(Points, PointRate)` | クーポンの適用中は `DomainException`。引数の名前は `points`、`pointRate`。 |
+| クーポンが適用中か | メソッド | `Cart` | `HasCoupon()` | 戻り値は `bool`。 |
+| ポイントを利用する（判定） | メソッド | `DiscountCalculationService` | `UsePoints(Cart, Points, PointRate)` | 戻り値は `PointUsageResult`。クーポンの適用中は `PointUsageResult.Failure` を返す。引数の名前は `cart`、`points`、`pointRate`。 |
+| クーポンを解除する（呼び出し） | メソッド | `DiscountCalculationService` | `Cancel(Cart, CouponCode)` | `Cart.CancelCoupon` を呼び出す。引数の名前は `cart`、`couponCode`。 |
+| 適用された割引率 | 属性 | `CouponApplicationResult` | `AppliedDiscountRate` | 型は `DiscountRate`（失敗時は 0 パーセント）。 |
+| 割引上限の適用 | 属性 | `CouponApplicationResult` | `MaximumDiscountApplied` | 型は `bool`。 |
+| ポイントの利用の解除 | 属性 | `CouponApplicationResult` | `PointUsageCancelled` | 型は `bool`。 |
+| 適用の成功 | メソッド | `CouponApplicationResult` | `Success(DiscountRate, Money, Money, bool, bool)` | 静的ファクトリ。引数の名前は `appliedDiscountRate`、`discountAmount`、`paymentAmount`、`maximumDiscountApplied`、`pointUsageCancelled`。 |
+| ポイントの利用結果 | 値オブジェクト | `PointUsageResult` | `Successful`、`ErrorMessage`、`Success()`、`Failure(string)` | 成否とエラーメッセージ（成功時は `null`）。`Failure` の引数の名前は `errorMessage`。 |
+| 併用不可のエラーメッセージ | 文言 | `DiscountCalculationService` | | 「クーポンとポイントは併用できません」。 |
 
 ## ステップ定義
 
@@ -66,6 +90,21 @@
 | ならば | エラーメッセージ {string} が表示される | `ErrorMessageIsShown` |
 | ならば | 割引額は {int} 円である | `DiscountAmountIs` |
 | ならば | 支払金額は {int} 円である | `PaymentAmountIs` |
+| ならば | クーポンの適用は成功する | `CouponApplicationSucceeds` |
+| ならば | 適用された割引率は {int} パーセントである | `AppliedDiscountRateIs` |
+| ならば | 割引上限が適用される | `MaximumDiscountIsApplied` |
+| 前提 | クーポン {string} を適用済みである | `CouponIsAlreadyApplied` |
+| もし | クーポン {string} を解除する | `CancelCoupon` |
+| 前提・もし | ポイントを {int} ポイント利用する | `UsePoints` |
+| ならば | ポイントの利用は成功する | `PointUsageSucceeds` |
+| ならば | ポイントの利用は失敗する | `PointUsageFails` |
+| ならば | ポイントの利用は解除される | `PointUsageIsCancelled` |
+| ならば | 利用ポイントは {int} ポイントである | `UsedPointsIs` |
+| 前提・ならば | ポイントによる値引き額は {int} 円である | `PointDiscountAmountIs` |
+
+「支払金額は {int} 円である」「ポイントによる値引き額は {int} 円である」は、前提の中にも記述されているため、
+`[Given]` と `[Then]` の両方を付けて `Assert` で検証します。「ポイントを {int} ポイント利用する」は、
+`[Given]` と `[When]` の両方を付けます。
 
 メソッド名は、前提では状況を表す名前（`CouponExists` など）、もしでは動詞から始まる名前（`ApplyCoupon`）、
 ならばでは検証する内容を表す名前（`CouponApplicationFails` など）とします。
@@ -75,8 +114,14 @@
 
 ### ステップ定義が保持する状態
 
-背景の各ステップで受け取った値はフィールドに保持し、「もし クーポン {string} を適用する」で
-`Coupon` と `Cart` を生成して `DiscountCalculationService.Apply` を呼び出し、結果を保持します。
+背景の各ステップで受け取った値はフィールドに保持し、`Coupon` と `Cart` は最初に必要になったステップで
+生成します。「クーポン {string} を適用済みである」「ポイントを {int} ポイント利用する」は前提の中にも
+記述されているため、「もし」より前に買い物かごが必要になるためです。
+
+「割引額は {int} 円である」「支払金額は {int} 円である」は、適用結果ではなく買い物かごから読んで検証します。
+ポイントに関するシナリオでは、クーポンの適用結果が存在しないことがあるためです。
+「エラーメッセージ {string} が表示される」は、直前の操作（クーポンの適用、またはポイントの利用）の
+エラーメッセージを検証します。
 
 | 用語 | フィールド | 型 | 設定するステップ |
 |---|---|---|---|
@@ -87,16 +132,20 @@
 | 現在日時 | `_now` | `DateTime` | 現在日時は {string} である |
 | 会員ランク | `_membershipRank` | `MembershipRank` | 会員ランクは {string} である |
 | 購入金額 | `_totalAmount` | `Money` | カートの購入金額は {int} 円である |
-| 適用結果 | `_result` | `CouponApplicationResult` | クーポン {string} を適用する |
-| ポイントの換算のポイント数 | `_pointRatePoints` | `int` | ポイントは {int} ポイントを {int} 円として計算する |
-| ポイントの換算の円 | `_pointRateYen` | `int` | ポイントは {int} ポイントを {int} 円として計算する |
+| 適用結果 | `_result` | `CouponApplicationResult` | クーポン {string} を適用する、クーポン {string} を適用済みである |
+| ポイントの換算 | `_pointRate` | `PointRate` | ポイントは {int} ポイントを {int} 円として計算する |
+| クーポン | `_coupon` | `Coupon?` | 最初に必要になったステップ |
+| 買い物かご | `_cart` | `Cart?` | 最初に必要になったステップ |
+| ポイントの利用結果 | `_pointUsageResult` | `PointUsageResult` | ポイントを {int} ポイント利用する |
+| エラーメッセージ | `_errorMessage` | `string?` | クーポン {string} を適用する、ポイントを {int} ポイント利用する など、直前の操作 |
 | 割引計算 | `_discountCalculationService` | `DiscountCalculationService` | （Reqnroll のコンテキスト注入によりコンストラクタで受け取る） |
 
 `.feature` の文字列から日付と日時への変換はステップ定義で行います。書式は、日付が `yyyy-MM-dd`、
 日時が `yyyy-MM-dd HH:mm:ss` です。
 
-「割引額の端数は切り捨てる」「ポイントは {int} ポイントを {int} 円として計算する」「ポイントを利用しない」は
-現時点のシナリオの判定に関わりません。受け取った値がある場合はフィールドに保持するだけとし、判定には使用しません。
+「割引額の端数は切り捨てる」は、切り捨てがドメインの固定の規則であるため何もしません
+（`docs/decisions.md` の 7）。「ポイントを利用しない」は、生成した買い物かごがポイントを利用していない
+状態であるため何もしません。
 
 ## 補足
 

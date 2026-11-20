@@ -33,9 +33,15 @@ public class CouponSteps
 
     private CouponApplicationResult _result = null!;
 
-    private int _pointRatePoints;
+    private PointRate _pointRate = null!;
 
-    private int _pointRateYen;
+    private Coupon? _coupon;
+
+    private Cart? _cart;
+
+    private PointUsageResult _pointUsageResult = null!;
+
+    private string? _errorMessage;
 
     /// <summary>
     /// クーポンによる割引の適用のステップ定義を生成する
@@ -96,7 +102,7 @@ public class CouponSteps
     [Given("割引額の端数は切り捨てる")]
     public void DiscountFractionIsTruncated()
     {
-        // 現時点のシナリオの判定に関わらないため、何も保持しない。
+        // 切り捨てはドメインの固定の規則であるため、何も保持しない（docs/decisions.md の 7）。
     }
 
     /// <summary>
@@ -107,8 +113,7 @@ public class CouponSteps
     [Given("ポイントは {int} ポイントを {int} 円として計算する")]
     public void PointRateIs(int points, int yen)
     {
-        _pointRatePoints = points;
-        _pointRateYen = yen;
+        _pointRate = new PointRate(points, yen);
     }
 
     /// <summary>
@@ -127,7 +132,7 @@ public class CouponSteps
     [Given("ポイントを利用しない")]
     public void PointsAreNotUsed()
     {
-        // 現時点のシナリオの判定に関わらないため、何も保持しない。
+        // 生成した買い物かごはポイントを利用していない状態であるため、何もしない。
     }
 
     /// <summary>
@@ -157,9 +162,50 @@ public class CouponSteps
     [When("クーポン {string} を適用する")]
     public void ApplyCoupon(string couponCode)
     {
-        var coupon = new Coupon(_couponCode, _minimumPurchaseAmount, _maximumDiscountAmount, _expirationDate);
-        var cart = new Cart(_totalAmount, _membershipRank);
-        _result = _discountCalculationService.Apply(coupon, cart, _now);
+        _result = _discountCalculationService.Apply(GetCoupon(), GetCart(), _now);
+        _errorMessage = _result.ErrorMessage;
+    }
+
+    /// <summary>
+    /// 前提 クーポン {string} を適用済みである
+    /// </summary>
+    /// <param name="couponCode">券種コード</param>
+    [Given("クーポン {string} を適用済みである")]
+    public void CouponIsAlreadyApplied(string couponCode)
+    {
+        _result = _discountCalculationService.Apply(GetCoupon(), GetCart(), _now);
+        _errorMessage = _result.ErrorMessage;
+    }
+
+    /// <summary>
+    /// もし クーポン {string} を解除する
+    /// </summary>
+    /// <param name="couponCode">券種コード</param>
+    [When("クーポン {string} を解除する")]
+    public void CancelCoupon(string couponCode)
+    {
+        _discountCalculationService.Cancel(GetCart(), new CouponCode(couponCode));
+    }
+
+    /// <summary>
+    /// 前提・もし ポイントを {int} ポイント利用する
+    /// </summary>
+    /// <param name="points">利用ポイント</param>
+    [Given("ポイントを {int} ポイント利用する")]
+    [When("ポイントを {int} ポイント利用する")]
+    public void UsePoints(int points)
+    {
+        _pointUsageResult = _discountCalculationService.UsePoints(GetCart(), new Points(points), _pointRate);
+        _errorMessage = _pointUsageResult.ErrorMessage;
+    }
+
+    /// <summary>
+    /// ならば クーポンの適用は成功する
+    /// </summary>
+    [Then("クーポンの適用は成功する")]
+    public void CouponApplicationSucceeds()
+    {
+        Assert.IsTrue(_result.Successful);
     }
 
     /// <summary>
@@ -178,7 +224,7 @@ public class CouponSteps
     [Then("エラーメッセージ {string} が表示される")]
     public void ErrorMessageIsShown(string errorMessage)
     {
-        Assert.AreEqual(errorMessage, _result.ErrorMessage);
+        Assert.AreEqual(errorMessage, _errorMessage);
     }
 
     /// <summary>
@@ -188,16 +234,95 @@ public class CouponSteps
     [Then("割引額は {int} 円である")]
     public void DiscountAmountIs(int discountAmount)
     {
-        Assert.AreEqual(new Money(discountAmount), _result.DiscountAmount);
+        Assert.AreEqual(new Money(discountAmount), GetCart().DiscountAmount);
     }
 
     /// <summary>
-    /// ならば 支払金額は {int} 円である
+    /// 前提・ならば 支払金額は {int} 円である
     /// </summary>
     /// <param name="paymentAmount">支払金額（円）</param>
+    [Given("支払金額は {int} 円である")]
     [Then("支払金額は {int} 円である")]
     public void PaymentAmountIs(int paymentAmount)
     {
-        Assert.AreEqual(new Money(paymentAmount), _result.PaymentAmount);
+        Assert.AreEqual(new Money(paymentAmount), GetCart().PaymentAmount);
+    }
+
+    /// <summary>
+    /// ならば 適用された割引率は {int} パーセントである
+    /// </summary>
+    /// <param name="discountRate">割引率（パーセント）</param>
+    [Then("適用された割引率は {int} パーセントである")]
+    public void AppliedDiscountRateIs(int discountRate)
+    {
+        Assert.AreEqual(new DiscountRate(discountRate), _result.AppliedDiscountRate);
+    }
+
+    /// <summary>
+    /// ならば 割引上限が適用される
+    /// </summary>
+    [Then("割引上限が適用される")]
+    public void MaximumDiscountIsApplied()
+    {
+        Assert.IsTrue(_result.MaximumDiscountApplied);
+    }
+
+    /// <summary>
+    /// ならば ポイントの利用は成功する
+    /// </summary>
+    [Then("ポイントの利用は成功する")]
+    public void PointUsageSucceeds()
+    {
+        Assert.IsTrue(_pointUsageResult.Successful);
+    }
+
+    /// <summary>
+    /// ならば ポイントの利用は失敗する
+    /// </summary>
+    [Then("ポイントの利用は失敗する")]
+    public void PointUsageFails()
+    {
+        Assert.IsFalse(_pointUsageResult.Successful);
+    }
+
+    /// <summary>
+    /// ならば ポイントの利用は解除される
+    /// </summary>
+    [Then("ポイントの利用は解除される")]
+    public void PointUsageIsCancelled()
+    {
+        Assert.IsTrue(_result.PointUsageCancelled);
+    }
+
+    /// <summary>
+    /// ならば 利用ポイントは {int} ポイントである
+    /// </summary>
+    /// <param name="usedPoints">利用ポイント</param>
+    [Then("利用ポイントは {int} ポイントである")]
+    public void UsedPointsIs(int usedPoints)
+    {
+        Assert.AreEqual(new Points(usedPoints), GetCart().UsedPoints);
+    }
+
+    /// <summary>
+    /// 前提・ならば ポイントによる値引き額は {int} 円である
+    /// </summary>
+    /// <param name="pointDiscountAmount">ポイントによる値引き額（円）</param>
+    [Given("ポイントによる値引き額は {int} 円である")]
+    [Then("ポイントによる値引き額は {int} 円である")]
+    public void PointDiscountAmountIs(int pointDiscountAmount)
+    {
+        Assert.AreEqual(new Money(pointDiscountAmount), GetCart().PointDiscountAmount);
+    }
+
+    // 前提の中でクーポンの適用やポイントの利用を行うシナリオがあるため、最初に必要になった時点で生成する。
+    private Coupon GetCoupon()
+    {
+        return _coupon ??= new Coupon(_couponCode, _minimumPurchaseAmount, _maximumDiscountAmount, _expirationDate);
+    }
+
+    private Cart GetCart()
+    {
+        return _cart ??= new Cart(_totalAmount, _membershipRank);
     }
 }

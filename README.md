@@ -21,6 +21,7 @@ C# と Reqnroll で実行します。
 | 第2回 | [仕様がそのまま品質基準になる——AIと作るGherkin（ガーキン）入門](https://note.com/fullness_dev/n/n8afa12c67ee3) |
 | C#編-① | [仕様から実装へ（C#編-①）——.feature を実行するコードを AI に生成させる](https://note.com/fullness_dev/n/na9ccf17be2fc) |
 | C#編-② | [仕様から実装へ（C#編-②）——シナリオを成功させる処理を AI に生成させる](https://note.com/fullness_dev/n/na587bafc5863) |
+| C#編-③ | [仕様から実装へ（C#編-③）——残りのシナリオをすべて成功させる](https://note.com/fullness_dev/n/n6967a4133497) |
 
 記事の公開時点のコードは、タグから取得できます。記事の手順に沿って実行する場合は、
 対応するタグをチェックアウトしてください。
@@ -30,12 +31,14 @@ git clone https://github.com/fullness-MFurukawa/bdd-ai-coupon-cs.git
 cd bdd-ai-coupon-cs
 git checkout v1   # C#編-①の公開時点
 git checkout v2   # C#編-②の公開時点
+git checkout v3   # C#編-③の公開時点
 ```
 
 | タグ | 状態 |
 |------|------|
 | `v1` | ドメインモデルのスケルトンとステップ定義のひな型。15ステップが定義済みで、最初のステップが pending で停止する |
 | `v2` | ドメインモデルとステップ定義に処理を実装。シナリオ「購入金額が最低購入金額に 1 円足りない場合はクーポンを使えない」が成功する |
+| `v3` | 割引率、割引上限、端数の切り捨て、ポイントとの併用を実装。`.feature` の全シナリオ（15件）が成功する |
 
 ---
 
@@ -93,7 +96,8 @@ dotnet test --logger "console;verbosity=detailed"
 ```
 bdd-ai-coupon-cs/
 ├── docs/
-│   └── glossary.md                       対訳表（ユビキタス言語と実装名の対応）
+│   ├── glossary.md                       対訳表（ユビキタス言語と実装名の対応）
+│   └── decisions.md                      業務上の判断の記録（.feature に無い事項の扱い）
 ├── src/
 │   └── BDD.AI.Coupons/
 │       └── Domain/
@@ -116,7 +120,9 @@ bdd-ai-coupon-cs/
 
 - 値オブジェクトは `record` で実装します
 - エンティティは `class` で実装し、プロパティは `get` のみとします。値はコンストラクタで設定します
-- エンティティには、状態を変更するメソッドではなく、業務上の判断を表すメソッドを持たせます
+- エンティティには、業務上の判断を表すメソッドを持たせます
+- 買い物かごは、クーポンの適用とポイントの利用状態を `private set` のプロパティで持ち、
+  状態を変更するメソッドは `.feature` の操作に対応するものに限ります
 - エンティティの同一性は識別子で判定します（`Equals` と `GetHashCode` をオーバーライド）
 - ステップ定義が使用するドメインサービスは、Reqnroll のコンテキスト注入によりコンストラクタで受け取ります
 - クーポンを使えないことは業務上の正常な結果として `CouponApplicationResult` で返し、
@@ -125,12 +131,16 @@ bdd-ai-coupon-cs/
 
 ---
 
-## 対訳表
+## 対訳表と業務上の判断
 
 ユビキタス言語は日本語、C# のクラス名は英語になります。訳し方が一つに決まらないため、
 どの用語をどの名前で実装するかを [docs/glossary.md](docs/glossary.md) にまとめています。
 
 他の言語のリポジトリにも同じ表を配置しています。言語ごとに変わるのは実装名の列だけです。
+
+`.feature` に記述されていない事項のうち、業務上の判断として定めたものは
+[docs/decisions.md](docs/decisions.md) に記述しています。Claude Code は判断が必要な箇所で
+まずこのファイルを参照し、記述が無い場合だけ質問します。
 
 ---
 
